@@ -1,6 +1,6 @@
 import { Lines } from './Lines.js'
 
-function Wave({ container }) {
+function Wave({ container, speed = .0005 } = {}) {
 
   if(!container) {
     throw new Error('No container specified')
@@ -48,7 +48,7 @@ function Wave({ container }) {
     gl.clear(gl.COLOR_BUFFER_BIT)
 
     if(lines) {
-      lines.draw(timeStamp * .0005)
+      lines.draw(timeStamp * speed)
     }
 
     frame = requestAnimationFrame(loop)

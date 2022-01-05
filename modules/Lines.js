@@ -9,25 +9,18 @@ function Lines({ gl, extension, size = 3, gap = 40 } = {}) {
   let matrices
   let matrixBuffer
   let matrixData
-  let colorBuffer
-  let numVertices
-  let numInstances
+  let indexBuffer
+  let vertexCount
+  let instanceCount
   let instanceOffsets
 
-  const positionLoc = gl.getAttribLocation(program, 'a_position');
-  // const colorLoc = gl.getAttribLocation(program, 'color');
-  const matrixLoc = gl.getAttribLocation(program, 'matrix');
   const deltaLoc = gl.getUniformLocation(program, "u_delta")
+  const positionLoc = gl.getAttribLocation(program, 'a_position')
+  const matrixLoc = gl.getAttribLocation(program, 'a_matrix')
+  
+  const indexLoc = gl.getAttribLocation(program, "a_index")
 
   let vertices
-
-  // const colors = [
-  //   1, 0, 0, 1,  // red
-  //   0, 1, 0, 1,  // green
-  //   0, 0, 1, 1,  // blue
-  //   1, 0, 1, 1,  // magenta
-  //   0, 1, 1, 1,  // cyan
-  // ]
 
   
   bindBuffer()
@@ -63,27 +56,19 @@ function Lines({ gl, extension, size = 3, gap = 40 } = {}) {
 
     return offsets
   }
-
-  function easeInOutCubic(x) {
-    return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
-  }
-
-  function easeInOutSine(x) {
-    return -(Math.cos(Math.PI * x) - 1) / 2
-  }
   
   function bindBuffer() {
     const { width } = gl.canvas
     
     // setup matrices, one per instance
-    numInstances = 1 + Math.floor((width - size) / gap)    
+    instanceCount = 1 + Math.floor((width - size) / gap)    
     vertices = getVertices({ size, width })
-    instanceOffsets = getInstanceOffsets({ size, width, count: numInstances })
+    instanceOffsets = getInstanceOffsets({ size, width, count: instanceCount })
   
-    positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-    numVertices = vertices.length / 2
+    positionBuffer = gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW)
+    vertexCount = vertices.length / 2
   
 
     
@@ -92,64 +77,46 @@ function Lines({ gl, extension, size = 3, gap = 40 } = {}) {
     // Translation matrix for each instance
     ///////////////////////
     const numFloatsForView = 16
-    matrixData = new Float32Array(numInstances * numFloatsForView)
-    matrices = new Array(numInstances).fill(0).map((_, index) => {
+    matrixData = new Float32Array(instanceCount * numFloatsForView)
+    matrices = new Array(instanceCount).fill(0).map((_, index) => {
       const byteOffsetToMatrix = index * numFloatsForView * 4
       const matrix = new Float32Array(matrixData.buffer, byteOffsetToMatrix, numFloatsForView)
-      // m4.translation(instanceOffsets[index], 0, 0, matrix)
-      // m4.zRotate(matrix, Math.PI, matrix)
-      // m4.scale(matrix, 1, .5, 1, matrix)
+      m4.translation(instanceOffsets[index], 0, 0, matrix)
       return matrix
     })
   
-    matrixBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, matrixBuffer);
-    // just allocate the buffer
-    gl.bufferData(gl.ARRAY_BUFFER, matrixData.byteLength, gl.DYNAMIC_DRAW);
+    matrixBuffer = gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER, matrixBuffer)
+    gl.bufferData(gl.ARRAY_BUFFER, matrixData.byteLength, gl.DYNAMIC_DRAW)
   
-
-
-    // setup colors, one per instance
-    // colorBuffer = gl.createBuffer();
-    // gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-    // gl.bufferData(gl.ARRAY_BUFFER,
-    //   new Float32Array(colors),
-    //   gl.STATIC_DRAW);
+    
+    const indexes = new Array(instanceCount).fill(0).map((_, index) => index)
+    indexBuffer = gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER, indexBuffer)
+    gl.bufferData(gl.ARRAY_BUFFER,
+      new Float32Array(indexes),
+      gl.STATIC_DRAW)
   }
-  
-  const numOctaves = 4
-  noise.seed(4)
 
-  this.draw = (timeStamp) => {
+  this.draw = (delta) => {
     gl.useProgram(program);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.enableVertexAttribArray(positionLoc);
     gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
 
-    gl.uniform1f(deltaLoc, timeStamp)
+    gl.uniform1f(deltaLoc, delta)
 
-    
-    matrices.forEach((mat, ndx) => {
-
-      // const progress = noise.perlin2(timeStamp - ndx * .04, ndx * .02) // !!!!!!!
-      const progress = noise.simplex2(timeStamp - ndx * .01, ndx * .01)
-      const z_rotation = progress >= 0 ? 0 : Math.PI
-      
-      m4.translation(instanceOffsets[ndx], 0, 0, mat)
-      m4.zRotate(mat, z_rotation, mat)
-      m4.scale(mat, 1, Math.abs(progress), 1, mat)
-    })
 
     // upload the new matrix data
     gl.bindBuffer(gl.ARRAY_BUFFER, matrixBuffer);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, matrixData);
 
     // set all 4 attributes for matrix
-    const bytesPerMatrix = 4 * 16;
+    const bytesPerMatrix = 4 * 16
     for (let i = 0; i < 4; ++i) {
-      const loc = matrixLoc + i;
-      gl.enableVertexAttribArray(loc);
+      const loc = matrixLoc + i
+      gl.enableVertexAttribArray(loc)
       // note the stride and offset
       const offset = i * 16;  // 4 floats per row, 4 bytes per float
       gl.vertexAttribPointer(
@@ -161,22 +128,21 @@ function Lines({ gl, extension, size = 3, gap = 40 } = {}) {
           offset,           // offset in buffer
       );
       // this line says this attribute only changes for each 1 instance
-      extension.vertexAttribDivisorANGLE(loc, 1);
+      extension.vertexAttribDivisorANGLE(loc, 1)
     }
 
 
-    // set attribute for color
-    // gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-    // gl.enableVertexAttribArray(colorLoc);
-    // gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
-    // // this line says this attribute only changes for each 1 instance
-    // extension.vertexAttribDivisorANGLE(colorLoc, 1);
+    
+    gl.bindBuffer(gl.ARRAY_BUFFER, indexBuffer)
+    gl.enableVertexAttribArray(indexLoc)
+    gl.vertexAttribPointer(indexLoc, 1, gl.FLOAT, false, 0, 0)
+    extension.vertexAttribDivisorANGLE(indexLoc, 1)
 
     extension.drawArraysInstancedANGLE(
       gl.TRIANGLES,
       0,             // offset
-      numVertices,   // num vertices per instance
-      numInstances,  // num instances
+      vertexCount,   // num vertices per instance
+      instanceCount,  // num instances
     );
 
   }

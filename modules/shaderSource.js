@@ -1,19 +1,22 @@
 import { snoise } from './snoise.js'
 
 const vertexShaderSource = `
-  attribute vec4 a_position;
-  // attribute vec4 color;
-  attribute mat4 matrix;
   uniform float u_delta;
-
-  varying vec4 v_color;
+  
+  attribute vec4 a_position;
+  attribute vec4 a_index;
+  attribute mat4 a_matrix;
+  
+  ${snoise}
 
   void main() {
-    // Multiply the position by the matrix.
-    gl_Position = matrix * a_position;
+    // density controls how many octaves are drawn
+    // smaller means less octaves
+    float density = 0.02;
+    float noise = snoise( vec3(u_delta - a_index * density) + vec3(a_position.xyz) );
+    vec4 noise_position = vec4(1.0, noise, 1.0, 1.0);
 
-    // Pass the vertex color to the fragment shader.
-    // v_color = color;
+    gl_Position = a_matrix * a_position * noise_position;
   }
 `
 const fragmentShaderSource = `
@@ -23,11 +26,7 @@ const fragmentShaderSource = `
     precision mediump float;
   #endif
 
-  // Passed in from the vertex shader.
-  // varying vec4 v_color;
-
   void main() {
-    // gl_FragColor = v_color;
     gl_FragColor = vec4(0.9, 0.5, 1.0, 1.0);
   }
 `
