@@ -2,7 +2,13 @@
 import { Program } from './Program.js'
 import { vertexShaderSource, fragmentShaderSource } from './shaderSource.js'
 
-function Lines({ gl, extension, size = 3, gap = 40 } = {}) {
+function Lines({ 
+  gl, 
+  extension, 
+  size = 3, 
+  gap = 40,
+  color
+} = {}) {
   const { program } = new Program(gl, vertexShaderSource, fragmentShaderSource)
 
   let positionBuffer
@@ -14,10 +20,11 @@ function Lines({ gl, extension, size = 3, gap = 40 } = {}) {
   let instanceCount
   let instanceOffsets
 
-  const deltaLoc = gl.getUniformLocation(program, "u_delta")
+  const deltaLoc = gl.getUniformLocation(program, 'u_delta')
+  const colorLoc = gl.getUniformLocation(program, 'u_color')
+
   const positionLoc = gl.getAttribLocation(program, 'a_position')
   const matrixLoc = gl.getAttribLocation(program, 'a_matrix')
-  
   const indexLoc = gl.getAttribLocation(program, "a_index")
 
   let vertices
@@ -106,6 +113,7 @@ function Lines({ gl, extension, size = 3, gap = 40 } = {}) {
     gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
 
     gl.uniform1f(deltaLoc, delta)
+    gl.uniform4fv(colorLoc, color)
 
 
     // upload the new matrix data

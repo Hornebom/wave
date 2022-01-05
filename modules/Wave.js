@@ -1,6 +1,18 @@
 import { Lines } from './Lines.js'
+import { hex2rgba } from './hex2rgba.js'
 
-function Wave({ container, speed = .0005 } = {}) {
+/**
+ * @param {object} container - dom node
+ * @param {number} speed - decimal float
+ * @param {string} color - hex string with 6 characters
+ * @param {number} opacity - decimal float 0-1
+ */
+function Wave({ 
+  container, 
+  speed = .0005, 
+  color = '#0AB6FF', 
+  opacity = 1
+} = {}) {
 
   if(!container) {
     throw new Error('No container specified')
@@ -29,6 +41,7 @@ function Wave({ container, speed = .0005 } = {}) {
     extension,
     size: 1,
     gap: 10,
+    color: hex2rgba(color, opacity)
    })
   
   container.appendChild(canvas)
@@ -44,6 +57,8 @@ function Wave({ container, speed = .0005 } = {}) {
     setViewport()
 
     gl.clearColor(0, 0, 0, 0)
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
+    gl.enable(gl.BLEND)
     gl.disable(gl.DEPTH_TEST)
     gl.clear(gl.COLOR_BUFFER_BIT)
 
