@@ -1,6 +1,7 @@
 
 import { Program } from './Program.js'
 import { vertexShaderSource, fragmentShaderSource } from './shaderSource.js'
+import { translation } from './utils.js'
 
 function Lines({ 
   gl, 
@@ -88,7 +89,7 @@ function Lines({
     matrices = new Array(instanceCount).fill(0).map((_, index) => {
       const byteOffsetToMatrix = index * numFloatsForView * 4
       const matrix = new Float32Array(matrixData.buffer, byteOffsetToMatrix, numFloatsForView)
-      m4.translation(instanceOffsets[index], 0, 0, matrix)
+      translation(instanceOffsets[index], 0, 0, matrix)
       return matrix
     })
   

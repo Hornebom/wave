@@ -1,5 +1,5 @@
 import { Lines } from './Lines.js'
-import { hex2rgba } from './hex2rgba.js'
+import { hex2rgba } from './utils.js'
 
 /**
  * @param {object} container - dom node
