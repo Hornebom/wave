@@ -17,6 +17,12 @@ function Program(gl, vertexShaderSource, fragmentShaderSource ) {
     const shader = gl.createShader(shaderType)
     gl.shaderSource(shader, shaderSource)
     gl.compileShader(shader)
+    
+    const message = gl.getShaderInfoLog(shader)
+    if (message.length > 0) {
+      throw message
+    }
+
     return shader
   }
 }

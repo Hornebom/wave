@@ -10,15 +10,26 @@ function Wave({ container }) {
   const gl = canvas.getContext('webgl', {
     alpha: true
   })
+  const extension = gl.getExtension('ANGLE_instanced_arrays')
 
   if (gl === null) {
     throw new Error('Unable to initialize WebGL. Your browser or machine may not support it.')
   }
   
+  if(!extension) {
+    throw new Error('No support for ANGLE_instanced_arrays')
+  }
+
+  
   let width = 30
   let height = 30
   let resizeTimeout
-  const lines = new Lines({ gl, gap: 12 })
+  const lines = new Lines({ 
+    gl, 
+    extension,
+    size: 1,
+    gap: 10,
+   })
   
   container.appendChild(canvas)
 
@@ -26,9 +37,7 @@ function Wave({ container }) {
   setViewport()
   let frame = requestAnimationFrame(loop)
 
-  function loop() {
-    frame = requestAnimationFrame(loop)
-    
+  function loop(timeStamp) {
     if(width !== container.clientWidth || height !== container.clientHeight) {
       setSize()
     }
@@ -39,8 +48,10 @@ function Wave({ container }) {
     gl.clear(gl.COLOR_BUFFER_BIT)
 
     if(lines) {
-      lines.render()
+      lines.draw(timeStamp * .0005)
     }
+
+    frame = requestAnimationFrame(loop)
   }
 
   function setSize(delay = 500) {
@@ -52,7 +63,7 @@ function Wave({ container }) {
         canvas.height = height
 
         if(lines) {
-          lines.update()
+          lines.update({ width })
         }
 
         resizeTimeout = undefined
