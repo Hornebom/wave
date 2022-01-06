@@ -1,4 +1,4 @@
-import { Lines } from './Lines.js'
+import { Mesh } from './Mesh.js'
 import { hex2rgba } from './utils.js'
 
 /**
@@ -31,16 +31,15 @@ function Wave({
   if(!extension) {
     throw new Error('No support for ANGLE_instanced_arrays')
   }
-
   
   let width = 30
   let height = 30
   let resizeTimeout
-  const lines = new Lines({ 
+  const mesh = new Mesh({ 
     gl, 
     extension,
-    size: 1,
-    gap: 10,
+    size: 2,
+    gap: 16,
     color: hex2rgba(color, opacity)
    })
   
@@ -62,8 +61,8 @@ function Wave({
     gl.disable(gl.DEPTH_TEST)
     gl.clear(gl.COLOR_BUFFER_BIT)
 
-    if(lines) {
-      lines.draw(timeStamp * speed)
+    if(mesh) {
+      mesh.draw({ delta: timeStamp * speed, spread: 1 })
     }
 
     frame = requestAnimationFrame(loop)
