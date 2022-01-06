@@ -1,4 +1,4 @@
-# Webgl Wave
+# WebGL Wave
 
 A prototype for an animated graphic build in vanilla js and webgl
 
