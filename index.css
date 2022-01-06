@@ -8,6 +8,12 @@ html {
   background-color: black;
 }
 
+body {
+  color: white;
+  font-family: sans-serif;
+  font-size: 18px;
+}
+
 .container {
   position: relative;
   width: 100%;
@@ -26,4 +32,12 @@ canvas {
   top: 0;
   left: 0;
   width: 100%;
+}
+
+.controls {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  padding: 30px;
+  background-color: black;
 }

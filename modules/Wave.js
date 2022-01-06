@@ -1,5 +1,5 @@
 import { Mesh } from './Mesh.js'
-import { hex2rgba } from './utils.js'
+import { hex2rgba, clamp } from './utils.js'
 
 /**
  * @param {object} container - dom node
@@ -34,7 +34,10 @@ function Wave({
   
   let width = 30
   let height = 30
+  let spread = 1
+  let isPlaying = true
   let resizeTimeout
+  let frame
   const mesh = new Mesh({ 
     gl, 
     extension,
@@ -47,9 +50,13 @@ function Wave({
 
   setSize(0)
   setViewport()
-  let frame = requestAnimationFrame(loop)
+  frame = requestAnimationFrame(loop)
 
   function loop(timeStamp) {
+    if(!isPlaying) {
+      return
+    }
+
     if(width !== container.clientWidth || height !== container.clientHeight) {
       setSize()
     }
@@ -62,7 +69,7 @@ function Wave({
     gl.clear(gl.COLOR_BUFFER_BIT)
 
     if(mesh) {
-      mesh.draw({ delta: timeStamp * speed, spread: 1 })
+      mesh.draw({ delta: timeStamp * speed, spread })
     }
 
     frame = requestAnimationFrame(loop)
@@ -76,8 +83,8 @@ function Wave({
         canvas.width = width
         canvas.height = height
 
-        if(lines) {
-          lines.update({ width })
+        if(mesh) {
+          mesh.update({ width })
         }
 
         resizeTimeout = undefined
@@ -87,6 +94,27 @@ function Wave({
 
   function setViewport() {
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
+  }
+
+  this.play = () => {
+    isPlaying = true
+    frame = requestAnimationFrame(loop)
+  }
+  
+  this.pause = () => {
+    isPlaying = false
+  }
+  
+  this.destroy = () => {
+    isPlaying = false
+    if(frame) {
+      cancelAnimationFrame(frame)
+      frame = null
+    }
+  }
+
+  this.setSpread = (value) => {
+    spread = clamp(value, 0, 1)
   }
 }
 
